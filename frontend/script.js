@@ -3,19 +3,12 @@
 ========================= */
 
 const errorInput = document.getElementById("errorInput");
-
 const explainButton = document.getElementById("explainButton");
-
 const statusMessage = document.getElementById("statusMessage");
-
 const resultSection = document.getElementById("resultSection");
-
 const result = document.getElementById("result");
-
 const copyButton = document.getElementById("copyButton");
-
-const exampleButtons =
-  document.querySelectorAll(".example-button");
+const exampleButtons = document.querySelectorAll(".example-button");
 
 
 /* =========================
@@ -23,58 +16,52 @@ const exampleButtons =
 ========================= */
 
 function formatExplanation(text) {
-
   let formatted = text;
 
-  /*
-    Convert code blocks first.
-  */
-
+  // Convert Markdown code blocks
   formatted = formatted.replace(
-    /```(?:javascript|js)?\s*([\s\S]*?)```/g,
+    /```(?:javascript|js|typescript|python|java|html|css|json)?\s*([\s\S]*?)```/gi,
     "<pre><code>$1</code></pre>"
   );
 
-
-  /*
-    Convert ### headings.
-  */
-
+  // Convert ### headings
   formatted = formatted.replace(
-    /^### (.*)$/gm,
+    /^###\s+(.*)$/gm,
     "<h3>$1</h3>"
   );
 
+  // Convert ## headings
+  formatted = formatted.replace(
+    /^##\s+(.*)$/gm,
+    "<h3>$1</h3>"
+  );
 
-  /*
-    Convert bold text.
-  */
-
+  // Convert bold text
   formatted = formatted.replace(
     /\*\*(.*?)\*\*/g,
     "<strong>$1</strong>"
   );
 
+  // Convert inline code
+  formatted = formatted.replace(
+    /`([^`]+)`/g,
+    "<code>$1</code>"
+  );
 
-  /*
-    Convert numbered lists.
-  */
-
+  // Convert numbered lists
   formatted = formatted.replace(
     /^(\d+)\.\s+(.*)$/gm,
     "<strong>$1.</strong> $2"
   );
 
-
-  /*
-    Convert line breaks.
-  */
-
+  // Convert bullet lists
   formatted = formatted.replace(
-    /\n/g,
-    "<br>"
+    /^[-*]\s+(.*)$/gm,
+    "• $1"
   );
 
+  // Convert line breaks
+  formatted = formatted.replace(/\n/g, "<br>");
 
   return formatted;
 }
@@ -85,21 +72,15 @@ function formatExplanation(text) {
 ========================= */
 
 exampleButtons.forEach((button) => {
-
   button.addEventListener("click", () => {
-
-    const exampleError =
-      button.dataset.error;
+    const exampleError = button.dataset.error;
 
     errorInput.value = exampleError;
-
     errorInput.focus();
 
     statusMessage.textContent =
       "Example loaded. Click Explain Error.";
-
   });
-
 });
 
 
@@ -107,185 +88,120 @@ exampleButtons.forEach((button) => {
    EXPLAIN ERROR
 ========================= */
 
-explainButton.addEventListener(
-  "click",
-  async () => {
+explainButton.addEventListener("click", async () => {
+  const error = errorInput.value.trim();
 
-    const error =
-      errorInput.value.trim();
+  // Validate input
+  if (!error) {
+    statusMessage.textContent =
+      "Please paste an error first.";
 
+    errorInput.focus();
+    return;
+  }
 
+  // Loading state
+  explainButton.disabled = true;
+  explainButton.textContent = "Explaining...";
+
+  statusMessage.textContent =
+    "AI is analyzing your error...";
+
+  resultSection.classList.add("hidden");
+
+  try {
     /*
-      Validate input.
+      IMPORTANT:
+
+      Use /generate instead of
+      http://localhost:3000/generate
+
+      This allows the app to work
+      correctly when deployed on Render.
     */
 
-    if (!error) {
+    const response = await fetch("/generate", {
+      method: "POST",
 
-      statusMessage.textContent =
-        "Please paste an error first.";
+      headers: {
+        "Content-Type": "application/json"
+      },
 
-      errorInput.focus();
+      body: JSON.stringify({
+        error: error
+      })
+    });
 
-      return;
+    // Try to read JSON response
+    const data = await response.json();
+
+    // Handle backend errors
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Something went wrong."
+      );
     }
 
+    // Make sure explanation exists
+    if (!data.explanation) {
+      throw new Error(
+        "The server returned an empty explanation."
+      );
+    }
 
-    /*
-      Loading state.
-    */
-
-    explainButton.disabled = true;
-
-    explainButton.textContent =
-      "Explaining...";
-
-    statusMessage.textContent =
-      "AI is analyzing your error...";
-
-    resultSection.classList.add(
-      "hidden"
+    // Display AI response
+    result.innerHTML = formatExplanation(
+      data.explanation
     );
 
+    // Show result
+    resultSection.classList.remove("hidden");
 
-    try {
+    statusMessage.textContent =
+      "Explanation generated successfully.";
 
-      /*
-        Send error to backend.
-      */
+  } catch (error) {
+    console.error("AI request failed:", error);
 
-      const response = await fetch(
-        "http://localhost:3000/generate",
-        {
-          method: "POST",
+    statusMessage.textContent =
+      error.message ||
+      "Unable to connect to the backend.";
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            error: error
-          })
-        }
-      );
-
-
-      /*
-        Convert response to JSON.
-      */
-
-      const data =
-        await response.json();
-
-
-      /*
-        Handle backend errors.
-      */
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          "Something went wrong."
-        );
-
-      }
-
-
-      /*
-        Display formatted AI response.
-      */
-
-      result.innerHTML =
-        formatExplanation(
-          data.explanation
-        );
-
-
-      /*
-        Show result section.
-      */
-
-      resultSection.classList.remove(
-        "hidden"
-      );
-
-
-      statusMessage.textContent =
-        "Explanation generated successfully.";
-
-
-    } catch (error) {
-
-      console.error(error);
-
-      statusMessage.textContent =
-        error.message ||
-        "Unable to connect to the backend.";
-
-    } finally {
-
-      /*
-        Restore button.
-      */
-
-      explainButton.disabled = false;
-
-      explainButton.textContent =
-        "Explain Error";
-
-    }
-
+  } finally {
+    // Restore button
+    explainButton.disabled = false;
+    explainButton.textContent = "Explain Error";
   }
-);
+});
 
 
 /* =========================
    COPY RESULT
 ========================= */
 
-copyButton.addEventListener(
-  "click",
-  async () => {
+copyButton.addEventListener("click", async () => {
+  const text = result.innerText.trim();
 
-    const text =
-      result.innerText.trim();
-
-
-    if (!text) {
-      return;
-    }
-
-
-    try {
-
-      await navigator.clipboard.writeText(
-        text
-      );
-
-      copyButton.textContent =
-        "Copied!";
-
-
-      setTimeout(() => {
-
-        copyButton.textContent =
-          "Copy";
-
-      }, 1500);
-
-
-    } catch (error) {
-
-      console.error(
-        "Copy failed:",
-        error
-      );
-
-      copyButton.textContent =
-        "Copy failed";
-
-    }
-
+  if (!text) {
+    return;
   }
-);
+
+  try {
+    await navigator.clipboard.writeText(text);
+
+    copyButton.textContent = "Copied!";
+
+    setTimeout(() => {
+      copyButton.textContent = "Copy";
+    }, 1500);
+
+  } catch (error) {
+    console.error("Copy failed:", error);
+
+    copyButton.textContent = "Copy failed";
+
+    setTimeout(() => {
+      copyButton.textContent = "Copy";
+    }, 1500);
+  }
+});
