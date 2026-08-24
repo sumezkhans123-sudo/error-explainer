@@ -7,28 +7,47 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// =========================
+// MIDDLEWARE
+// =========================
+
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend
+// =========================
+// SERVE FRONTEND
+// =========================
+
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Homepage
+// =========================
+// HOME PAGE
+// =========================
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
-// Health check
+// =========================
+// HEALTH CHECK
+// =========================
+
 app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+  res.json({
+    status: "ok",
+    message: "Error Explainer backend is running",
+  });
 });
 
-// AI error explanation
+// =========================
+// AI ERROR EXPLANATION
+// =========================
+
 app.post("/generate", async (req, res) => {
   try {
     const { error } = req.body;
 
-    // Check that an error was provided
+    // Validate input
     if (!error || !error.trim()) {
       return res.status(400).json({
         error: "Please provide a programming error to explain.",
@@ -62,7 +81,10 @@ Do not pretend to know information that was not provided.
 If the error alone is not enough to determine the exact cause, clearly say that.
 `;
 
-    // Call OpenRouter from the backend
+    // =========================
+    // CALL OPENROUTER
+    // =========================
+
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -86,8 +108,9 @@ If the error alone is not enough to determine the exact cause, clearly say that.
       response.data.choices[0].message.content;
 
     res.json({
-      explanation: explanation,
+      explanation,
     });
+
   } catch (error) {
     console.error(
       "AI request failed:",
@@ -101,7 +124,10 @@ If the error alone is not enough to determine the exact cause, clearly say that.
   }
 });
 
-// Start server
+// =========================
+// START SERVER
+// =========================
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
