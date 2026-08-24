@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Error Explainer</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <main class="container">
+
+    <!-- Header -->
+    <header class="hero">
+      <div class="icon">🛠️</div>
+
+      <h1>Error Explainer</h1>
+
+      <p>
+        Understand your programming errors faster.
+      </p>
+    </header>
+
+
+    <!-- Input Card -->
+    <section class="card">
+
+      <label for="errorInput">
+        Paste your programming error
+      </label>
+
+      <textarea
+        id="errorInput"
+        placeholder="Example: TypeError: Cannot read properties of undefined (reading 'map')"
+      ></textarea>
+
+
+      <!-- Example Errors -->
+      <div class="examples">
+
+        <span>Try an example:</span>
+
+        <button class="example-button" data-error="TypeError: Cannot read properties of undefined (reading 'map')">
+          TypeError
+        </button>
+
+        <button class="example-button" data-error="ReferenceError: myVariable is not defined">
+          ReferenceError
+        </button>
+
+        <button class="example-button" data-error="SyntaxError: Unexpected token ')'">
+          SyntaxError
+        </button>
+
+      </div>
+
+
+      <!-- Main Button -->
+      <button id="explainButton">
+        Explain Error
+      </button>
+
+
+      <!-- Status -->
+      <p id="statusMessage" class="status"></p>
+
+    </section>
+
+
+    <!-- Result -->
+    <section id="resultSection" class="result-section hidden">
+
+      <div class="result-card">
+
+        <div class="result-header">
+          <h2>AI Explanation</h2>
+
+          <button id="copyButton" class="copy-button">
+            Copy
+          </button>
+        </div>
+
+        <div id="result"></div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script src="script.js"></script>
+
+</body>
+</html>
