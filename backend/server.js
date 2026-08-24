@@ -11,10 +11,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend
+// Serve frontend files
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Homepage
+// Home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
@@ -29,6 +29,7 @@ app.post("/generate", async (req, res) => {
   try {
     const { error } = req.body;
 
+    // Check that an error was provided
     if (!error || !error.trim()) {
       return res.status(400).json({
         error: "Please provide a programming error to explain.",
@@ -62,6 +63,7 @@ Do not pretend to know information that was not provided.
 If the error alone is not enough to determine the exact cause, clearly say that.
 `;
 
+    // Call OpenRouter from the backend
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -81,10 +83,11 @@ If the error alone is not enough to determine the exact cause, clearly say that.
       }
     );
 
-    const explanation = response.data.choices[0].message.content;
+    const explanation =
+      response.data.choices[0].message.content;
 
     res.json({
-      explanation,
+      explanation: explanation,
     });
   } catch (error) {
     console.error(
@@ -93,11 +96,13 @@ If the error alone is not enough to determine the exact cause, clearly say that.
     );
 
     res.status(500).json({
-      error: "Something went wrong while generating the explanation.",
+      error:
+        "Something went wrong while generating the explanation.",
     });
   }
 });
 
+// Start server
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
