@@ -86,3 +86,8 @@ Frontend
   |
   v
 Explanation shown to user
+
+
+## Submission
+
+Final submission branch for the Error Explainer project.
